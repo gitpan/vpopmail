@@ -7,6 +7,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD);
 require Exporter;
 require DynaLoader;
 
+# Change this to the username you installed 'vpopmail' to run as
+use constant VPOPMAIL_UNAME => 'vpopmail';
+
+
 @ISA = qw(Exporter DynaLoader);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -22,7 +26,7 @@ require DynaLoader;
 	NO_WEBMAIL
 	USE_APOP
 	USE_POP
-	vadddomain
+	adddomain
 	vdeldomain
 	vadduser
 	vdeluser
@@ -31,7 +35,7 @@ require DynaLoader;
 	vauth_user
 	
 );
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -58,11 +62,20 @@ bootstrap vpopmail $VERSION;
 
 # Preloaded methods go here.
 
+sub adddomain {
+  my ($domain, $dir, $uid, $gid) = @_;
+  if (scalar(@_) < 4 ) {
+    my ($vuid, $vgid, $vhome) = (getpwnam(VPOPMAIL_UNAME))[2,3,7];
+    return vadddomain($domain, $vhome, $vuid, $vgid);
+  } else {
+    vadddomain(@_);
+  }
+}
 # Autoload methods go after =cut, and are processed by the autosplit program.
 
 1;
 __END__
-# Below is the stub of documentation for your module. You better edit it!
+# Below is the stub of documentation for this module.
 
 =head1 NAME
 
@@ -72,7 +85,7 @@ vpopmail - Perl extension for the vpopmail package
 
 	use vpopmail;
 
-	vadddomain('vpopmail.com', 0) 
+	adddomain('vpopmail.com');
 
 	vadduser('username', 'vpopmail.com', 'p@ssw0rd', 'Test User', 0 );
 

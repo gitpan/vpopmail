@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'	=> 'vpopmail',
     'VERSION_FROM' => 'vpopmail.pm', # finds $VERSION
-    'LIBS'	=> ['-L/home/vpopmail/lib -lvpopmail'],   # e.g., '-lm' 
+    'LIBS'	=> ['-L/usr/local/vpopmail/lib -lvpopmail'],   # e.g., '-lm' 
     'DEFINE'	=> '',     # e.g., '-DHAVE_SOMETHING' 
-    'INC'	=> '-I/home/vpopmail/include', 
+    'INC'	=> '-I/usr/local/vpopmail/include', 
 );

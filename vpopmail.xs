@@ -45,11 +45,11 @@ constant(name,arg)
 	int		arg
 
 int
-vadddomain(domain, make_default)
+vadddomain(domain, dir, uid, gid)
 	char *		domain
-	int		make_default
-    OUTPUT:
-        RETVAL
+	char *		dir
+	int		uid
+	int		gid
 
 int
 vdeldomain(domain)

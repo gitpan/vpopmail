@@ -14,27 +14,32 @@ print "ok 1\n";
 
 ######################### End of black magic.
 
-
-if ( ( vadddomain('vpopmail.com', 0) ) == 0 ) {
-    print "vadddomain() ok\n";
+#
+if ( ( adddomain('vpopmail.com' ) ) == 0 ) {
+  print "adddomain() ok\n";
 }
 
+#
 if ( ( vadduser('username', 'vpopmail.com', 'p@ssw0rd', 'Test User', 0 ) ) == 0 ) {
     print "vadduser() ok\n";
 }
 
+#
 if ( vauth_user('username', 'vpopmail.com', 'p@ssw0rd', undef)) {
     print "vauth_user() ok\n";
 }
 
+#
 if ( ( vsetuserquota('username', 'vpopmail.com', '5M') ) == 0 ) {
 	print "vsetuserquota() ok\n";
 }
 
+#
 if ( ( vdeluser('username', 'vpopmail.com') ) == 0 ) {
     print "vdeluser() ok\n";
 }
 
+#
 if ( ( vdeldomain('vpopmail.com') ) == 0 ) {
     print "vdeldomain() ok\n";
 }
