@@ -36,7 +36,7 @@ require DynaLoader;
 	     dotqmail2u	     
 );
 
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 sub AUTOLOAD {
   # This AUTOLOAD is used to 'autoload' constants from the constant()

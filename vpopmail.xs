@@ -293,18 +293,6 @@ vgetatchars()
         RETVAL
 
 
-int vadddotqmail(alias, domain)
-	char	*	alias
-	char	*	domain
-OUTPUT:
-	RETVAL
-
-int vdeldotqmail(alias, domain)
-	char	*	alias
-	char	*	domain
-OUTPUT:
-	RETVAL
-
 SV *
 QMAILDIR()
 	CODE:
