@@ -1,0 +1,7 @@
+const char *					T_PTROBJ
+off_t						T_PTROBJ
+struct passwd *					T_PTROBJ
+passwd *					T_PTROBJ
+#struct passwd *					T_PTR
+uid_t						T_UV
+vpopmail					T_PTROBJ

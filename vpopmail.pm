@@ -1,30 +1,23 @@
+# $Id: vpopmail.pm,v 1.7 2001/05/26 04:46:30 sps Exp $
 package vpopmail;
 
-use strict;
+use strict; no strict 'subs';
 use Carp;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD);
+use FileHandle;
+use File::stat;
 
 require Exporter;
 require DynaLoader;
-
-# Change this to the username you installed 'vpopmail' to run as
-use constant VPOPMAIL_UNAME => 'vpopmail';
-
 
 @ISA = qw(Exporter DynaLoader);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 @EXPORT = qw(
-
-	BOUNCE_MAIL
-	NO_DIALUP
-	NO_IMAP
-	NO_PASSWD_CHNG
-	NO_POP
-	NO_RELAY
-	NO_WEBMAIL
+	     
 	USE_APOP
+	QMAILDIR
 	USE_POP
 	adddomain
 	vdeldomain
@@ -33,29 +26,35 @@ use constant VPOPMAIL_UNAME => 'vpopmail';
 	vpasswd
 	vsetuserquota
 	vauth_user
-	
+	vauth_getpw
+	vlistusers
+	vlistdomains
+	vaddalias
+	vaddforward
+	vgetdomaindir
 );
-$VERSION = '0.03';
+
+$VERSION = '0.04';
 
 sub AUTOLOAD {
-    # This AUTOLOAD is used to 'autoload' constants from the constant()
-    # XS function.  If a constant is not found then control is passed
-    # to the AUTOLOAD in AutoLoader.
+  # This AUTOLOAD is used to 'autoload' constants from the constant()
+  # XS function.  If a constant is not found then control is passed
+  # to the AUTOLOAD in AutoLoader.
 
-    my $constname;
-    ($constname = $AUTOLOAD) =~ s/.*:://;
-    my $val = constant($constname, @_ ? $_[0] : 0);
-    if ($! != 0) {
-	if ($! =~ /Invalid/) {
-	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
-	    goto &AutoLoader::AUTOLOAD;
-	}
-	else {
-		croak "Your vendor has not defined vpopmail macro $constname";
-	}
+  my $constname;
+  ($constname = $AUTOLOAD) =~ s/.*:://;
+  my $val = constant($constname, @_ ? $_[0] : 0);
+  if ($! != 0) {
+    if ($! =~ /Invalid/) {
+      $AutoLoader::AUTOLOAD = $AUTOLOAD;
+      goto &AutoLoader::AUTOLOAD;
     }
-    eval "sub $AUTOLOAD { $val }";
-    goto &$AUTOLOAD;
+    else {
+      croak "Your vendor has not defined vpopmail macro $constname";
+    }
+  }
+  eval "sub $AUTOLOAD { $val }";
+  goto &$AUTOLOAD;
 }
 
 bootstrap vpopmail $VERSION;
@@ -63,13 +62,231 @@ bootstrap vpopmail $VERSION;
 # Preloaded methods go here.
 
 sub adddomain {
+
   my ($domain, $dir, $uid, $gid) = @_;
+
   if (scalar(@_) < 4 ) {
-    my ($vuid, $vgid, $vhome) = (getpwnam(VPOPMAIL_UNAME))[2,3,7];
-    return vadddomain($domain, $vhome, $vuid, $vgid);
+
+    return vadddomain($domain, VPOPMAILDIR(), VPOPMAILUID(), VPOPMAILGID());
+
   } else {
+
     vadddomain(@_);
+
   }
+
+}
+
+
+sub vlistusers {
+
+  my $domain = shift();
+
+  my @users = ();
+
+  my $tmpU = vauth_getall($domain, 1, 1);
+
+  push(@users, $tmpU);
+
+  while ($tmpU = vauth_getall($domain, 0, 1) ) {
+    push(@users, $tmpU);
+  }
+
+  return @users;
+}
+
+sub vlistdomains {
+
+  my $assignFile = sprintf("%s/users/assign", QMAILDIR());
+
+  my $fh = new FileHandle $assignFile;
+
+  die("can't open: $assignFile for reading\n") if ! $fh;
+
+  my @list = ();
+
+  while (defined(my $line = $fh->getline() ) ) {
+
+    chomp($line);
+
+    last if $line =~ /^\.$/ || ! $line;
+
+    my ($domain, $uid, $gid, $dir) = (split(/:/, $line))[1,2,3,4];
+
+    if ($uid == VPOPMAILUID() && $gid == VPOPMAILGID() ) {
+
+      push( @list, $domain );
+
+    }
+
+  }
+
+  return @list;
+
+}
+
+
+sub vgetdomaindir {
+
+  my $domain = shift();
+
+  return -1 if ! $domain;
+
+  my $assignFile = sprintf("%s/users/assign", QMAILDIR());
+
+  my $fh = new FileHandle $assignFile;
+
+  die("can't open: $assignFile for reading\n") if ! $fh;
+
+  my @list = ();
+
+  while (defined(my $line = $fh->getline() ) ) {
+
+    chomp($line);
+
+    last if $line =~ /^\.$/ || ! $line;
+
+    my ($d, $dir) = (split(/:/, $line))[1,4];
+
+    if ( $domain eq $d ) {
+
+      $fh->close();
+
+      return $dir;
+
+    }
+
+  }
+
+  $fh->close();
+
+}
+
+sub vaddalias {
+
+  my ($user, $domain, $alias) = @_;
+
+  if ($user =~ /[^A-Z_a-z0-9.-]/ ) {
+
+    warn("vaddalias() username contains invalid characters\n");
+
+    return undef;
+
+  }
+
+  if ($alias =~ /[^A-Z_a-z0-9.-]/ ) {
+
+    warn("vaddalias() username contains invalid characters\n");
+
+    return undef;
+
+  }
+
+  $alias =~ s/\./:/g; # translate '.' to ':'
+
+  my $ddir = vgetdomaindir($domain);
+
+  return undef if ! -d $ddir;
+
+  my $pwd = vauth_getpw($user, $domain);
+
+  return undef if ! $pwd;
+
+  my $fname = sprintf("%s/.qmail-%s", $ddir, $alias);
+
+  umask(077);
+
+  my $fh = new FileHandle $fname, O_CREAT|O_WRONLY;
+
+  if (! $fh ) {
+
+    warn "couldn't open: $fname ($!)\n";
+
+    return undef;
+
+  }
+
+  $fh->print("$pwd->{pw_dir}/\n");
+
+  $fh->close();
+
+  undef($fh);
+
+  my $fp = stat($fname);
+
+  if ( $fp->uid() != VPOPMAILUID() || 
+       $fp->gid() != VPOPMAILGID() ) {
+
+    chown(VPOPMAILUID(), VPOPMAILGID(), $fname);
+
+  }
+
+}
+
+sub vaddforward {
+
+  my ($user, $domain, $forward) = @_;
+
+  if ( $user =~ /[^A-Z_a-z0-9.-]/ ) {
+
+    warn("vaddforward() username contains invalid characters\n");
+
+    return undef;
+
+  }
+
+  if ($forward !~ /\@/ || $forward =~ /[^A-Z_a-z0-9.-\@]/ ) {
+
+    warn("vaddforward() forward addr contains invalid characters\n");
+
+    return undef;
+
+  }
+
+  $user =~ s/\./:/g; # translate '.' to ':'
+
+  my $ddir = vgetdomaindir($domain);
+
+  my $pwd = vauth_getpw($user, $domain);
+
+  return undef if $pwd; # return if user already exists
+
+  my $fname = sprintf("%s/.qmail-%s", $ddir, $user);
+
+  umask(077);
+
+  my $fh = new FileHandle $fname, O_CREAT|O_WRONLY;
+
+  if (! $fh ) {
+
+    warn "couldn't open: $fname ($!)\n";
+
+    return undef;
+
+  }
+
+  $fh->print("\&$forward");
+
+  $fh->close();
+
+  undef($fh);
+
+  my $fp = stat($fname);
+
+  if ( $fp->uid() != VPOPMAILUID() || 
+       $fp->gid() != VPOPMAILGID() ) {
+
+    chown(VPOPMAILUID(), VPOPMAILGID(), $fname);
+
+  }
+
+  return 1;
+
+}
+
+
+sub getatchars {
+  return split(//,vgetatchars());
 }
 # Autoload methods go after =cut, and are processed by the autosplit program.
 
@@ -85,9 +302,19 @@ vpopmail - Perl extension for the vpopmail package
 
 	use vpopmail;
 
+	print "running vpopmail V", vpopmail::vgetversion(), "\n";
+
 	adddomain('vpopmail.com');
 
+	vadduser('postmaster', 'vpopmail.com', 'p0stmAst3r', 'Postmaster Account', 0 );
+
 	vadduser('username', 'vpopmail.com', 'p@ssw0rd', 'Test User', 0 );
+
+	vdeluser('username', 'vpopmail.com');
+
+	vaddalias('username', 'vpopmail.com', 'alias_address');
+
+	vaddforward('local_addr', 'vpopmail.com', 'some@otherdomain.com');
 
 	if ( vauth_user('username', 'vpopmail.com', 'p@ssw0rd', undef) ) {
 		print 'auth ok';
@@ -99,6 +326,17 @@ vpopmail - Perl extension for the vpopmail package
 
 	vdeldomain('vpopmail.com');
 
+	foreach my $domain (vlistdomains()) {
+
+		print "$domain:\n";
+
+		foreach my $user (vlistusers($domain)) {
+
+			print "\t$user->{pw_name} ($user->{pw_gecos})\n";
+		}
+	print "\n\n";
+	}
+
 
 =head1 DESCRIPTION
 
@@ -108,7 +346,7 @@ Perl extension for the vpopmail package
 
 =head1 AUTHOR
 
-Sean P. Scanlon <sps@shore.net>
+Sean P. Scanlon <sps@cpan.org>
 
 =head1 SEE ALSO
 
