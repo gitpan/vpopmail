@@ -1,0 +1,23 @@
+Sorry for the lack of docs.
+
+I've tested this with vpopmail-3.4.11.released and vpopmail-4.8.5
+running perl 5.6.0, but should work with 5.004_03 +
+
+See: <http://www.inter7.com/vpopmail/vpopmail.html>
+for more info about the API, etc...
+
+see the INSTALL file for installation instructions.
+
+the following functions are available via this module:
+
+vadddomain() 
+vdeldomain() 
+vadduser( ) 
+vdeluser() 
+vpasswd() 
+vsetuserquota() 
+vauth_user() 
+
+see test.pl for some examples
+
+Please send comments and questions to <sps@shore.net>

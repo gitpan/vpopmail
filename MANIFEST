@@ -1,0 +1,10 @@
+Changes
+Copyright
+COPYING
+INSTALL
+README
+MANIFEST
+Makefile.PL
+test.pl
+vpopmail.pm
+vpopmail.xs

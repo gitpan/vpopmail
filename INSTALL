@@ -1,0 +1,18 @@
+1.
+	Edit Makefile.PL: set include paths
+	edit the 'LIBS' and 'INC' lines to point to your vpopmail install.
+	If you are using vpopmail with mysql
+	you *may* need to add the mysqlclient library
+	to the 'LIBS' section of Makefile.PL.
+	e.g: 
+'LIBS'      => ['-L/home/vpopmail/lib -lvpopmail -L/usr/local/mysql/lib -lmysqlclient']
+
+2.
+	perl Makefile.PL
+
+3.
+	make
+4.
+	make test (as root or vpopmail user)
+5.
+	[ su root | sudo ] make install
