@@ -1,4 +1,4 @@
-# $Id: example.pl,v 1.2 2001/05/29 03:46:00 sps Exp $
+# $Id: example.pl,v 1.4 2001/08/11 15:49:39 sps Exp $
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
@@ -38,10 +38,23 @@ foreach my $domain (vlistdomains()) {
   print "\n\n";
 }
 
-vaddalias("sps", "yeatbubba.net", "sales");
+vaddalias("sps", "yeatbubba.net", "elron");
 
-vaddforward("sean.scanlon", "yeatbubba.net", 'sps@cpan.org');
+vaddforward("sean.scanlon", "yeatbubba.net", 'sps@bluedot.net');
 
 system(sprintf("/bin/ls -l %s", vgetdomaindir("yeatbubba.net") ));
 
+$foo = vauth_getpw("sps",  "yeatbubba.net");
+
+
+
+print "gecos: ", vauth_getpw("sps",  "yeatbubba.net")->{pw_gecos}, "\n";
+
+$foo->{pw_gecos} = "Sean P. Scanlon";
+
+vpopmail::vauth_setpw($foo, "yeatbubba.net");
+
+print "gecos: ", vauth_getpw("sps",  "yeatbubba.net")->{pw_gecos}, "\n";
+
 vdeldomain("yeatbubba.net");
+

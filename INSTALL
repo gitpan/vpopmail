@@ -1,5 +1,15 @@
+------------------------------------------------------------
+If you are running a recent version of vpopmail you should be able to:
+ perl Makefile.PL (may need to be root)
+ make (may need to be root)
+ make test (as root or vpopmail user)
+ [ su root | sudo ] make install
+
+
+------------------------------------------------------------
+if Makefile.PL fails (and its not a permissions issue):
 1.
-	Edit Makefile.PL: set include paths
+	Edit Makefile.attic: set include paths
 	edit the 'LIBS' and 'INC' lines to point to your vpopmail install.
 	If you are using vpopmail with mysql
 	you *may* need to add the mysqlclient library as well as libz (-lz)
@@ -8,7 +18,7 @@
 'LIBS'      => ['-L/home/vpopmail/lib -lvpopmail -L/usr/local/mysql/lib -lmysqlclient']
 
 2.
-	perl Makefile.PL
+	perl Makefile.attic
 
 3.
 	make

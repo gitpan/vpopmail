@@ -1,4 +1,4 @@
-# $Id: vpopmail.pm,v 1.7 2001/05/26 04:46:30 sps Exp $
+# $Id: vpopmail.pm,v 1.12 2001/12/14 03:24:06 sps Exp $
 package vpopmail;
 
 use strict; no strict 'subs';
@@ -16,25 +16,27 @@ require DynaLoader;
 # Do not simply export all your public functions/methods/constants.
 @EXPORT = qw(
 	     
-	USE_APOP
-	QMAILDIR
-	USE_POP
-	adddomain
-	vdeldomain
-	vadduser
-	vdeluser
-	vpasswd
-	vsetuserquota
-	vauth_user
-	vauth_getpw
-	vlistusers
-	vlistdomains
-	vaddalias
-	vaddforward
-	vgetdomaindir
+	     USE_APOP
+	     QMAILDIR
+	     USE_POP
+	     adddomain
+	     vdeldomain
+	     vadduser
+	     vdeluser
+	     vpasswd
+	     vsetuserquota
+	     vauth_user
+	     vauth_getpw
+	     vauth_setpw
+	     vlistusers
+	     vlistdomains
+	     vaddalias
+	     vaddforward
+	     vgetdomaindir
+	     dotqmail2u	     
 );
 
-$VERSION = '0.04';
+$VERSION = '0.07';
 
 sub AUTOLOAD {
   # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -102,27 +104,27 @@ sub vlistdomains {
   my $fh = new FileHandle $assignFile;
 
   die("can't open: $assignFile for reading\n") if ! $fh;
-
+  
   my @list = ();
-
+  
   while (defined(my $line = $fh->getline() ) ) {
-
+    
     chomp($line);
-
+    
     last if $line =~ /^\.$/ || ! $line;
-
+    
     my ($domain, $uid, $gid, $dir) = (split(/:/, $line))[1,2,3,4];
-
-    if ($uid == VPOPMAILUID() && $gid == VPOPMAILGID() ) {
-
+    
+    if ( $uid == VPOPMAILUID() && $gid == VPOPMAILGID() ) {
+      
       push( @list, $domain );
-
+      
     }
 
   }
 
   return @list;
-
+  
 }
 
 
@@ -288,6 +290,17 @@ sub vaddforward {
 sub getatchars {
   return split(//,vgetatchars());
 }
+
+sub dotqmail2u($) {
+
+  my $user = (split(/qmail\-/, shift()))[1];
+  print "user: $user\n";
+  $user =~ s/\:/./g;
+
+  return $user;
+
+}
+
 # Autoload methods go after =cut, and are processed by the autosplit program.
 
 1;
@@ -346,15 +359,10 @@ Perl extension for the vpopmail package
 
 =head1 AUTHOR
 
-Sean P. Scanlon <sps@cpan.org>
+Sean P. Scanlon <sscanlon@cpan.org>
 
 =head1 SEE ALSO
 
 perl(1), [ http://www.inter7.com/vpopmail ].
 
 =cut
-
-
-
-
-

@@ -5,6 +5,7 @@ INSTALL
 README
 MANIFEST
 Makefile.PL
+Makefile.attic
 typemap
 vpopmail.pm
 vpopmail.xs
